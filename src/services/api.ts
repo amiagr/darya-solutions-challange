@@ -36,8 +36,9 @@ export default class Api {
       }
       const ws = new WebSocketWrapper({
         url: path,
-        reconnectInterval: 3000,
         maxReconnectAttempts: this.maxAttempts,
+        backoffBase: 1000,
+        maxBackoffDelay: 45000,
       })
       ws.onOpen(() => {
         console.log('Connected to the WebSocket!')

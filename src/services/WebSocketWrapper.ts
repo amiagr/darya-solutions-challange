@@ -9,8 +9,9 @@ type EventHandler = (event: WsEvent) => void
 
 interface WebSocketWrapperOptions {
   url: string
-  reconnectInterval?: number // in milliseconds
   maxReconnectAttempts?: number
+  backoffBase?: number
+  maxBackoffDelay?: number
 }
 
 export const wsConnectionStatus = ref<
@@ -19,11 +20,15 @@ export const wsConnectionStatus = ref<
 
 class WebSocketWrapper {
   private url: string
-  private reconnectInterval: number
   private maxReconnectAttempts: number
   private reconnectAttempts: number = 0
   private websocket: WebSocket | null = null
   private isConnected: boolean = false
+
+  // --- NEW: Backoff Config Properties ---
+  private readonly backoffBase: number
+  private readonly maxBackoffDelay: number
+  // ------------------------------------
 
   private messageHandlers: MessageHandler[] = []
   private errorHandlers: ErrorHandler[] = []
@@ -32,8 +37,13 @@ class WebSocketWrapper {
 
   constructor(options: WebSocketWrapperOptions) {
     this.url = options.url
-    this.reconnectInterval = options.reconnectInterval ?? 5000
     this.maxReconnectAttempts = options.maxReconnectAttempts ?? Infinity
+
+    // --- Initializing Backoff Settings ---
+    this.backoffBase = options.backoffBase ?? 1000
+    this.maxBackoffDelay = options.maxBackoffDelay ?? 30000
+    // ------------------------------------------
+
     this.connect()
   }
 
@@ -43,7 +53,7 @@ class WebSocketWrapper {
     this.websocket = new WebSocket(this.url)
 
     this.websocket.onopen = (ev: Event) => {
-      console.log('WebSocket connected')
+      console.log('WebSocket connected on:', this.url)
       const e: WsEvent = { ...ev, endpoint: this.url }
       this.isConnected = true
       wsConnectionStatus.value = 'connected'
@@ -56,35 +66,48 @@ class WebSocketWrapper {
     }
 
     this.websocket.onerror = (error) => {
-      console.error('WebSocket error', error)
+      console.error('WebSocket error on', this.url, error)
       const errorEvent: WsEvent = { ...error, endpoint: this.url }
       this.errorHandlers.forEach((handler) => handler(errorEvent))
     }
 
     this.websocket.onclose = (ev: CloseEvent) => {
-      console.warn('WebSocket closed')
+      console.warn('WebSocket closed for:', this.url)
       this.isConnected = false
       wsConnectionStatus.value = 'reconnecting'
       const closeEvent: WsEvent = { ...ev, endpoint: this.url }
       if (this.onCloseHandler) this.onCloseHandler(closeEvent)
-      ev.code !== 1e3 && ev.code !== 1005 && this.reconnect()
+
+      if (ev.code !== 1000 && ev.code !== 1005) {
+        this.reconnect()
+      }
     }
   }
 
+  // --- The reconnect method with Exponential Backoff ---
   private reconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       wsConnectionStatus.value = 'disconnected'
-      console.error('Max reconnect attempts reached. Giving up.')
+      console.error(`Max reconnect attempts reached for ${this.url}. Giving up.`)
       return
     }
 
+    const delay = Math.min(this.backoffBase * 2 ** this.reconnectAttempts, this.maxBackoffDelay)
+    const jitter = Math.floor(Math.random() * 1000)
+    const nextDelay = delay + jitter
+
+    console.log(
+      `Reconnecting to ${this.url} in ~${Math.round(nextDelay / 1000)}s... (Attempt ${this.reconnectAttempts + 1})`
+    )
+
     this.reconnectAttempts++
-    console.log(`Reconnecting in ${this.reconnectInterval / 1000} seconds...`)
-    setTimeout(() => this.connect(), this.reconnectInterval)
+    setTimeout(() => this.connect(), nextDelay)
   }
+  // -----------------------------------------------------------------
 
   public close(): void {
-    this.websocket?.close()
+    this.maxReconnectAttempts = 0
+    this.websocket?.close(1000)
     wsConnectionStatus.value = 'disconnected'
     this.isConnected = false
   }

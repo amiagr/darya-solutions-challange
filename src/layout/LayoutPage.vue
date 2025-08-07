@@ -21,13 +21,16 @@
         </transition>
       </router-view>
     </div>
+
+    <ConnectionStatus />
   </div>
 </template>
+
 <script setup lang="ts">
 import Api from '@/services/Api'
-import { computed, watchEffect } from 'vue'
-import { ref, watch } from 'vue'
+import { computed, watchEffect, ref, watch } from 'vue'
 import { useRouter, useRoute, type RouteLocationNormalized } from 'vue-router'
+import ConnectionStatus from '@/components/ConnectionStatus.vue'
 
 const currentPage = ref('dashboard')
 const router = useRouter()
