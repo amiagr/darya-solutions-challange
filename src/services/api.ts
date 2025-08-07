@@ -1,6 +1,6 @@
 import WebSocketWrapper from './WebSocketWrapper'
 import type { Stream } from '@/types'
-import { wsConnectionStatus } from './WebSocketWrapper'
+import { wsConnectionStatus } from '@/services/WebSocketWrapper'
 
 export default class Api {
   private maxAttempts: number

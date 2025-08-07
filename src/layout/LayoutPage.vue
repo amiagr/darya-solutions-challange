@@ -27,14 +27,26 @@
 </template>
 
 <script setup lang="ts">
-import Api from '@/services/Api'
 import { computed, watchEffect, ref, watch } from 'vue'
 import { useRouter, useRoute, type RouteLocationNormalized } from 'vue-router'
+import { useStore } from '@/stores';
+
+import Api from '@/services/api.ts'
+
 import ConnectionStatus from '@/components/ConnectionStatus.vue'
 
 const currentPage = ref('dashboard')
 const router = useRouter()
 const route = useRoute()
+
+const store = useStore();
+
+const api = new Api()
+const connectionStatus = api.getConnectionStatus()
+
+watch(connectionStatus, (newStatus) => {
+  store.setConnectionStatus(newStatus);
+}, { immediate: true, deep: true });
 
 watch(
   route,
@@ -44,8 +56,6 @@ watch(
   { deep: true }
 )
 
-const api = new Api()
-const connectionStatus = api.getConnectionStatus()
 
 const connectionStatusText = computed(() => {
   switch (connectionStatus.value) {
@@ -78,7 +88,6 @@ const connectionBannerVisible = ref(false)
 let connectedTimeout: ReturnType<typeof setTimeout> | null = null
 
 watchEffect(() => {
-  console.log({ connectionStatus: connectionStatus.value })
   if (connectionStatus.value === 'connected') {
     connectionBannerVisible.value = true
     if (connectedTimeout) clearTimeout(connectedTimeout)

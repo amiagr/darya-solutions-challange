@@ -1,12 +1,13 @@
 <template>
   <div class="content-box">
-    <div class="menu-bar">
+    <div class="menu-bar" :class="{ disconnected: isDisconnected }">
       <SearchableDropdown
         id="base"
         :options="currencyOptions"
         value-key="key"
         v-model="baseCurrency"
         placeholder="Select Token"
+        :disabled="isDisconnected"
       ></SearchableDropdown>
       <span class="slash">/</span>
       <SearchableDropdown
@@ -47,6 +48,7 @@ import { subscribeSymbol } from '../services/binance'
 import type { Coin, Coins } from '@/types'
 import { useStore } from '@/stores'
 
+
 const currencyList = coins as Coins
 const quote = ref('BNB')
 const baseCurrency: Ref<string | null> = ref(null)
@@ -63,11 +65,17 @@ const clear = () => {
   location.reload()
 }
 
+const isDisconnected = computed(() => store.connectionStatus !== 'connected');
+
 const addCoinPair = () => {
+  if (isDisconnected.value) {
+    alert("Connection lost. Try again later.");
+    return;
+  }
+
   if (baseCurrency.value) {
     const symbol = `${baseCurrency.value}${quote.value}`
     const coin: Coin = currencyOptions.value.find((c) => c.key === baseCurrency.value)!
-    console.log({ symbol })
     subscribeSymbol(symbol)
     store.addCoinPair({
       symbol: symbol,
@@ -87,3 +95,10 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.menu-bar.disconnected {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

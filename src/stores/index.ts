@@ -1,9 +1,11 @@
-import { reactive, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import defaultPair from '@/assets/defaultpair.json'
 import type { Symbol, Ticker } from '@/types'
 
 const LOCAL_STORAGE_KEY = 'darya-crypto-currencies'
+
+type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting' | 'initializing'
 
 const getStoredCurrencies = () => {
   const store_currencies = localStorage.getItem(LOCAL_STORAGE_KEY)
@@ -13,6 +15,7 @@ const getStoredCurrencies = () => {
 export const useStore = defineStore('store', () => {
   const currencies: Symbol[] = reactive(getStoredCurrencies()) // Non reactive
   const tickers: Map<string, Ticker> = reactive(new Map() as Map<string, Ticker>) // Reactive Map
+  const connectionStatus = ref<ConnectionStatus>('initializing')
 
   function setDefaultCurrencies() {
     currencies.splice(0, currencies.length)
@@ -47,6 +50,10 @@ export const useStore = defineStore('store', () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currencies))
   }
 
+  function setConnectionStatus(status: ConnectionStatus) {
+    connectionStatus.value = status
+  }
+
   const getSymbolById = computed(() => (symbol: string) => {
     return currencies.find((s) => s.symbol === symbol)
   })
@@ -60,10 +67,12 @@ export const useStore = defineStore('store', () => {
   return {
     currencies,
     tickers,
+    connectionStatus,
     setDefaultCurrencies,
     updateTicker,
     addCoinPair,
     removeCoinPair,
+    setConnectionStatus,
     getSymbolById,
     getTickerById,
     hasTicker,
