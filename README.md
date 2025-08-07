@@ -12,8 +12,8 @@ This application successfully implements all the required features, focusing on 
 
 <table align="center">
   <tr>
-    <td align="center"><strong>Normal Operation View</strong></td>
-    <td align="center"><strong>Graceful Degradation (Disconnected)</strong></td>
+    <td align="center"><strong>Dashboard View</strong></td>
+    <td align="center"><strong>Single Coin (with news)</strong></td>
   </tr>
   <tr>
     <td><img src="./screenshots/dashboard-view.png" alt="Dashboard showing live data and connection status" width="450"></td>
