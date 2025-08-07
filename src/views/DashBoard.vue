@@ -40,11 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, type Ref } from 'vue'
+import { ref, computed, onMounted, type Ref, watch } from 'vue'
 import SearchableDropdown from '@/components/SearchableDropdown.vue'
 import CryptoBoard from './CryptoBoard.vue'
 import coins from '@/assets/group.json'
-import { subscribeSymbol } from '../services/binance'
+import { fetchTickerSnapshot, subscribeSymbol } from '../services/binance'
 import type { Coin, Coins } from '@/types'
 import { useStore } from '@/stores'
 
@@ -66,6 +66,18 @@ const clear = () => {
 }
 
 const isDisconnected = computed(() => store.connectionStatus !== 'connected');
+const connectionStatus = computed(() => store.connectionStatus);
+
+watch(connectionStatus, (newStatus, oldStatus) => {
+  // ُToDo: Race condition
+  if (oldStatus !== 'initializing' && newStatus === 'connected') {
+    if (store.currencies) {
+      store.currencies.forEach((currency) => {
+        fetchTickerSnapshot(currency.symbol)
+      })
+    }
+  }
+}, { immediate: true });
 
 const addCoinPair = () => {
   if (isDisconnected.value) {

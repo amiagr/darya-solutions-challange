@@ -33,4 +33,25 @@ const subscribeChart = function (symbol: string, interval: number) {
 const unSubscribeChart = function (symbol: string, interval: number) {
   wsApi.closeSubscription('kline', false, symbol, interval)
 }
-export { subscribeSymbol, unSubscribeSymbol, subscribeChart, unSubscribeChart }
+
+const fetchTickerSnapshot = function (symbol: string) {
+  wsApi.onSnapshot(
+    symbol,
+    (ticker: { c: string; q: string; P: string; p: any; h: any; l: any; o: any; E: any }) => {
+      const tick: Ticker = {
+        price: parseFloat(ticker.lastPrice),
+        vol: parseFloat(ticker.volume).toFixed(2),
+        percent: parseFloat(ticker.priceChangePercent).toFixed(2),
+        chg: ticker.priceChange,
+        high: ticker.highPrice,
+        low: ticker.lowPrice,
+        open: ticker.openPrice,
+        time: ticker.closeTime,
+        symbol: ticker.symbol,
+      }
+      store.updateTicker(tick)
+    }
+  )
+}
+
+export { subscribeSymbol, unSubscribeSymbol, subscribeChart, unSubscribeChart, fetchTickerSnapshot }

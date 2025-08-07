@@ -46,7 +46,7 @@ const connectionStatus = api.getConnectionStatus()
 
 watch(connectionStatus, (newStatus) => {
   store.setConnectionStatus(newStatus);
-}, { immediate: true, deep: true });
+}, { immediate: true});
 
 watch(
   route,

@@ -1,6 +1,8 @@
-import WebSocketWrapper from './WebSocketWrapper'
+import WebSocketWrapper from '@/services/WebSocketWrapper'
 import type { Stream } from '@/types'
 import { wsConnectionStatus } from '@/services/WebSocketWrapper'
+
+const REST_API_BASE_URL = 'https://api.binance.com/api/v3'
 
 export default class Api {
   private maxAttempts: number
@@ -30,6 +32,7 @@ export default class Api {
   }
   subscribe(cb: any, endpoint: string, isCombined = false) {
     try {
+      console.log({ endpoint: endpoint.split('@')[0] })
       const path = (isCombined ? this._combinedBaseUrl : this._baseUrl) + endpoint
       if (this.subscription[path]) {
         return this.subscription[path]
@@ -109,6 +112,13 @@ export default class Api {
   onTicker(symbol: string, eventHandler: any) {
     return this.subscribe(eventHandler, this.streams.ticker(symbol))
   }
+
+  onSnapshot(symbol: string, eventHandler: any) {
+    return fetch(`${REST_API_BASE_URL}/ticker/24hr?symbol=${symbol.toUpperCase()}`)
+      .then((response) => response.json())
+      .then((data) => eventHandler(data))
+  }
+
   onMiniTicker(symbol: string, eventHandler: any) {
     return this.subscribe(eventHandler, this.streams.miniTicker(symbol))
   }
