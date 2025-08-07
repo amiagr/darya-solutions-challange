@@ -10,6 +10,17 @@ The primary focus of this project was to build a **resilient, robust, and user-f
 
 This application successfully implements all the required features, focusing on robustness and user experience.
 
+<table align="center">
+  <tr>
+    <td align="center"><strong>Normal Operation View</strong></td>
+    <td align="center"><strong>Graceful Degradation (Disconnected)</strong></td>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/dashboard-view.png" alt="Dashboard showing live data and connection status" width="450"></td>
+    <td><img src="./screenshots/disconnected-state.png" alt="Overlay showing stale data message during disconnection" width="450"></td>
+  </tr>
+</table>
+
 #### 1. **Real-Time Connection Monitoring**
 * A dedicated, secondary WebSocket connection acts as a **heartbeat/ping-pong** mechanism to monitor network latency and detect connection failures within seconds.
 * A Telegram-style status indicator provides users with real-time feedback on the connection state (`Connecting`, `Connected`, `Reconnecting`, `Disconnected`).
